@@ -114,6 +114,19 @@
         },
         {
             "inputs": [],
+            "name": "bInitialized",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
             "name": "beneficiary",
             "outputs": [
                 {
@@ -136,6 +149,13 @@
                 }
             ],
             "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "claim",
+            "outputs": [],
+            "stateMutability": "nonpayable",
             "type": "function"
         },
         {
@@ -242,19 +262,6 @@
         },
         {
             "inputs": [],
-            "name": "isBase",
-            "outputs": [
-                {
-                    "internalType": "bool",
-                    "name": "",
-                    "type": "bool"
-                }
-            ],
-            "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [],
             "name": "isContractActive",
             "outputs": [
                 {
@@ -342,13 +349,6 @@
                 }
             ],
             "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [],
-            "name": "claim",
-            "outputs": [],
-            "stateMutability": "nonpayable",
             "type": "function"
         },
         {

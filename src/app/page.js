@@ -522,7 +522,7 @@ export default function Home() {
         account: walletAddress,
         address: factoryAddress,
         abi: factoryAbi,
-        functionName: 'createSocialSecurity',
+        functionName: 'createSocialInsurance',
         args: [
           depositedTokenAddress,
           walletAddress,
@@ -564,7 +564,7 @@ export default function Home() {
       // 这里可以添加逻辑来更新 UI 或获取新创建的社保计划信息
     } catch (error) {
       setCreating(false);
-      console.error('Error creating social security plan:', error)
+      console.error('Error creating social insurance plan:', error)
       toast({
         title: "创建社保计划失败",
         description: error.message,

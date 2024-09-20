@@ -1,9 +1,20 @@
 {
     "address": {
         "mainnet": "",
-        "sepolia": "0x7cedc87EBbDA5d5A42C385ea628df0C68ada58cB"
+        "sepolia": "0x53Ce3b80D99Ab36ba2A196a3F3820A9e3cE3C947"
     },
     "abi": [
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_socialInsuranceImp",
+                    "type": "address"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "constructor"
+        },
         {
             "anonymous": false,
             "inputs": [
@@ -32,7 +43,7 @@
                     "type": "address"
                 }
             ],
-            "name": "SocialSecurityCreated",
+            "name": "SocialInsuranceCreated",
             "type": "event"
         },
         {
@@ -73,7 +84,7 @@
                     "type": "address"
                 }
             ],
-            "name": "createSocialSecurity",
+            "name": "createSocialInsurance",
             "outputs": [
                 {
                     "internalType": "address",
@@ -83,17 +94,6 @@
             ],
             "stateMutability": "nonpayable",
             "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "_socialSecurityImp",
-                    "type": "address"
-                }
-            ],
-            "stateMutability": "nonpayable",
-            "type": "constructor"
         },
         {
             "inputs": [
@@ -148,7 +148,7 @@
         },
         {
             "inputs": [],
-            "name": "socialSecurityImp",
+            "name": "socialInsuranceImp",
             "outputs": [
                 {
                     "internalType": "address",
