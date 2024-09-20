@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { InfoIcon } from '@chakra-ui/icons'
 import { createPublicClient, http, createWalletClient, custom, parseAbi, formatEther, parseEther, zeroAddress, parseUnits, erc20Abi } from 'viem'
-import { flare, mainnet, sepolia } from 'viem/chains'
+import { flare, mainnet, sepolia, blast, base, arbitrum, optimism } from 'viem/chains'
 import ssFactoryJson from './contracts/ssFactory.json'
 import ss from './contracts/ss.json'
 import BigNumber from 'bignumber.js';
@@ -58,6 +58,37 @@ const networkConfigs = {
       { value: 'USDC', address: '0x8267cF9254734C6Eb452a7bb9AAF97B392258b21', symbol: 'USDC', decimals: 6 }, // Sepolia USDC
       { value: 'custom', address: '', symbol: 'Custom Token' }
     ]
+  },
+  blast: {
+    chain: blast,
+    chainId: '0x13e31',
+    name: 'Blast',
+    tokens: [
+      { value: 'Blast', address: '0xb1a5700fA2358173Fe465e6eA4Ff52E36e88E2ad', symbol: 'Blast', decimals: 18 },
+      { value: 'USDB', address: '0x4300000000000000000000000000000000000003', symbol: 'USDB', decimals: 18 },
+      { value: 'custom', address: '', symbol: 'Custom Token' }
+    ]
+  },
+  base: {
+    chain: base,
+    chainId: '0x2105',
+    name: 'Base',
+    tokens: [
+      { value: 'WETH', address: '0x4200000000000000000000000000000000000006', symbol: 'WETH', decimals: 18 },
+      { value: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', symbol: 'USDC', decimals: 6 },
+      { value: 'custom', address: '', symbol: 'Custom Token' }
+    ]
+  },
+  arbitrum: {
+    chain: arbitrum,
+    chainId: '0xa4b1',
+    name: 'Arbitrum',
+    tokens: [
+      { value: 'ARB', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', symbol: 'ARB', decimals: 18 },
+      { value: 'USDC', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', symbol: 'USDC', decimals: 6 },
+      { value: 'GMX', address: '0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a', symbol: 'GMX', decimals: 18 },
+      { value: 'custom', address: '', symbol: 'Custom Token' }
+    ]
   }
 };
 
@@ -89,7 +120,7 @@ export default function Home() {
   ])
 
   const [selectedNetwork, setSelectedNetwork] = useState('mainnet')
-  const [selectedToken, setSelectedToken] = useState('stETH')
+  const [selectedToken, setSelectedToken] = useState('')
   const [selectedTokenDecimals, setSelectedTokenDecimals] = useState(18)
   const [customTokenSymbol, setCustomTokenSymbol] = useState('')
   const [customTokenAddress, setCustomTokenAddress] = useState('')
@@ -373,6 +404,11 @@ export default function Home() {
     const savedNetwork = localStorage.getItem('selectedNetwork')
     if (savedNetwork && networkConfigs[savedNetwork]) {
       setSelectedNetwork(savedNetwork)
+    }
+
+    const lng = localStorage.getItem("language");
+    if (lng) {
+      setLanguage(lng);
     }
   }, [])
 
@@ -792,6 +828,7 @@ export default function Home() {
 
   const changeLanguage = (lng) => {
     setLanguage(lng)
+    localStorage.setItem('language', lng);
   }
 
   const _t = (chStr, enStr) => {
@@ -803,6 +840,10 @@ export default function Home() {
       <Flex px={6} py={4} position="fixed" top={0} left={0} right={0} bg="white" boxShadow="sm" zIndex={10}>
         <Select value={selectedNetwork} onChange={(e) => handleNetworkChange(e.target.value)} width="200px">
           <option value="mainnet">{_t("以太坊主网", "Ethereum Mainnet")}</option>
+          <option value="arbitrum">{_t("Arbitrum主网", "Arbitrum Mainnet")}</option>
+          {/* <option value="optimism">{_t("Optimism主网", "Optimism Mainnet")}</option> */}
+          <option value="base">{_t("Base主网", "Base Mainnet")}</option>
+          <option value="blast">{_t("Blast主网", "Blast Mainnet")}</option>
           <option value="sepolia">{_t("Sepolia 测试网", "Sepolia Testnet")}</option>
         </Select>
         <Spacer />
@@ -989,7 +1030,7 @@ export default function Home() {
         </Box>
 
         <Button colorScheme="blue" size="lg" onClick={() => setIsOpen(true)}>
-        {_t("创建我的社保", "Create My Social Insurance.")}
+        {_t("创建我的社保", "Create My Social Insurance")}
         </Button>
 
         <Modal isOpen={isOpenDepositDialog} onClose={() => setIsOpenDepositDialog(false)}>

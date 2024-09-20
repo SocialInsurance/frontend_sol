@@ -1,6 +1,9 @@
 {
     "address": {
         "mainnet": "",
+        "arbitrum": "0xfe3f1F56f4bfe8eBf251EB99b67Bf4dc3B576c85",
+        "base": "0xf69578E00142dD12F9c72C7EfCaeAac8e0AF1289",
+        "blast": "0xa2143688f8fC41D54b635FBdDFC1d1E161b960B8",
         "sepolia": "0x53Ce3b80D99Ab36ba2A196a3F3820A9e3cE3C947"
     },
     "abi": [
