@@ -7,7 +7,7 @@ import {
   FormControl, FormLabel, Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
   InputGroup, InputLeftAddon, InputRightAddon, Tooltip, Icon, Text,
   Table, Thead, Tbody, Tr, Th, Td, TableContainer,
-  Flex, Spacer, useToast, Select, ButtonGroup, Spinner, Center, Switch
+  Flex, Spacer, useToast, Select, ButtonGroup, Spinner, Center, IconButton
 } from '@chakra-ui/react'
 import { InfoIcon } from '@chakra-ui/icons'
 import { createPublicClient, http, createWalletClient, custom, parseAbi, formatEther, parseEther, zeroAddress, parseUnits, erc20Abi } from 'viem'
@@ -16,6 +16,7 @@ import ssFactoryJson from './contracts/ssFactory.json'
 import ss from './contracts/ss.json'
 import BigNumber from 'bignumber.js';
 import CopyableAddress from './CopyableAddress';
+import { FaTwitter } from 'react-icons/fa';
 
 function formatAmount(amount) {
   amount = new BigNumber(amount);
@@ -849,6 +850,16 @@ export default function Home() {
         <Spacer />
         <Button onClick={() => changeLanguage('en')} mr={2}>EN</Button>
         <Button onClick={() => changeLanguage('zh')} mr={2}>中文</Button>
+        <IconButton
+          as="a"
+          href="https://x.com/socialins001" // 替换为你的推特链接
+          target="_blank" // 在新标签页中打开
+          aria-label="Twitter"
+          icon={<FaTwitter />}
+          colorScheme="blue"
+          variant="outline"
+          mr={2}
+        />
         {isWalletConnected ? (
           <Tooltip label={walletAddress} placement="bottom" hasArrow>
             <Button 
