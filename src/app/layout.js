@@ -1,6 +1,7 @@
 'use client'
 
 import { ChakraProvider } from '@chakra-ui/react'
+import { Analytics } from "@vercel/analytics/react"
 
 export default function RootLayout({ children }) {
   return (
@@ -9,6 +10,7 @@ export default function RootLayout({ children }) {
         <ChakraProvider>
           {children}
         </ChakraProvider>
+        <Analytics />
       </body>
     </html>
   )
