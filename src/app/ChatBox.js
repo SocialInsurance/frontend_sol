@@ -52,20 +52,20 @@ const ChatBox = () => {
         setPrivateKey(sk);
         let pk = getPublicKey(sk)
         setPubKey(pk)
-
+        const threeDaysAgo = Math.floor(Date.now() / 1000) - 3 * 24 * 60 * 60;
         relay.subscribe([
             {
                 kinds: [1],
-               '#t': [CHATROOM_ID]
+               '#t': [CHATROOM_ID],
+               since: threeDaysAgo
             },
             ], {
             onevent(event) {
                 //console.log('got event:', event)
                 setMessages((prevMessages) => {
                     const idSet = prevMessages.map(msg => msg.id);
-                    if (!idSet.includes(event.id)) {
-                        prevMessages.sort((a, b) => a.created_at - b.created_at)
-                        return [...prevMessages, event]
+                    if (!idSet.includes(event.id)) {                        
+                        return [...prevMessages, event].sort((a, b) => a.created_at - b.created_at)
                     }
                     return [...prevMessages]
                 });
@@ -99,6 +99,7 @@ const ChatBox = () => {
   };
 
   const toggleExpand = () => {
+    console.log('toggleExpand', isExpanded);
     setIsExpanded(!isExpanded);
   };
 
@@ -199,7 +200,7 @@ const ChatBox = () => {
                             <Text fontSize="10px" mb={1}>
                                 {new Date(msg.created_at * 1000).toLocaleString()}
                             </Text>
-                            {/* <MessageBubble message={msg} isSelf={isSelf}/>                             */}
+                            {/* <MessageBubble message={msg} isSelf={isSelf}/> */}
                             <Text overflowX="auto" fontSize="sm">{msg.content}</Text>
                         </Flex>
                     </Flex>
