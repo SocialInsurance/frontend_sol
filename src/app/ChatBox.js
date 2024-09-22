@@ -24,7 +24,7 @@ const ChatBox = () => {
   const selfTextColor = useColorModeValue('black', 'white');
   const otherTextColor = useColorModeValue('black', 'white');
 
-  const CHATROOM_ID = 'chatroom:socialins.club';
+  const CHATROOM_ID = 'chatroom:socialinsclub';
   const PRIVATE_KEY_STORAGE_KEY = 'nostr_key';
 
   useEffect(() => {
