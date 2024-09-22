@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { 
-    Box, Button, Input, VStack, Text, Flex, IconButton, 
+    Box, Button, VStack, Text, Flex, IconButton, 
     useColorModeValue, Fade, Textarea, Spacer
   } from '@chakra-ui/react';
-import { SimplePool, generateSecretKey, getPublicKey, finalizeEvent, signEvent, Relay } from 'nostr-tools';
+import { generateSecretKey, getPublicKey, finalizeEvent, Relay } from 'nostr-tools';
 import { ChevronUpIcon, ChevronDownIcon, ChatIcon } from '@chakra-ui/icons';
-import BlockchainAvatar from './BlockchainAvatar';
+// import BlockchainAvatar from './BlockchainAvatar';
+import blockies from 'ethereum-blockies';
+import Image from 'next/image';
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
@@ -125,6 +127,24 @@ const ChatBox = () => {
     </Box>
   );
 
+  const BlockiesAvatar = ({ seed, size }) => {
+    const icon = blockies.create({
+      seed: seed.toLowerCase(),
+      size: 8,
+      scale: size / 8,
+    });
+  
+    return <img
+            style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                objectFit: 'cover'
+            }} 
+            src={icon.toDataURL()} 
+            alt="Blockies Avatar" />;
+  };
+
   return (
     <Box
       position="fixed"
@@ -169,8 +189,9 @@ const ChatBox = () => {
                         mb={2} 
                         alignItems="start"
                         flexDirection={isSelf ? 'row-reverse' : 'row'}>
-                        <BlockchainAvatar pubkey={msg.pubkey} size={32}/>
+                        <BlockiesAvatar seed={msg.pubkey} size={32}/>
                         <Flex 
+                            width="60%"
                             flexDirection="column" 
                             alignItems={isSelf ? 'flex-end' : 'flex-start'}
                             mx={2}
@@ -179,7 +200,7 @@ const ChatBox = () => {
                                 {new Date(msg.created_at * 1000).toLocaleString()}
                             </Text>
                             {/* <MessageBubble message={msg} isSelf={isSelf}/>                             */}
-                            <Text width="60%" overflowX="auto" fontSize="sm">{msg.content}</Text>
+                            <Text overflowX="auto" fontSize="sm">{msg.content}</Text>
                         </Flex>
                     </Flex>
                 )
