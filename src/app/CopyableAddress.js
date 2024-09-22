@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Box, IconButton, Tooltip } from '@chakra-ui/react';
 import { CopyIcon } from '@chakra-ui/icons';

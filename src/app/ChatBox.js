@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useState, useRef } from 'react';
 import { 
     Box, Button, Input, VStack, Text, Flex, IconButton, 

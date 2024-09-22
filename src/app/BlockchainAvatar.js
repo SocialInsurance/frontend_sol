@@ -1,4 +1,5 @@
-// BlockchainAvatar.js
+'use client'
+
 import React, { useEffect, useRef } from 'react';
 import jazzicon from 'jazzicon';
 import { Box } from '@chakra-ui/react';
