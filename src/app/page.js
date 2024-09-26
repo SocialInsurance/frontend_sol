@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Box, Heading, VStack, HStack, Badge, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText, Image,
   Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
@@ -17,6 +17,12 @@ import ss from './contracts/ss.json'
 import BigNumber from 'bignumber.js';
 import CopyableAddress from './CopyableAddress';
 import { FaTwitter } from 'react-icons/fa';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
+import { ConnectionProvider, WalletProvider, useWallet } from '@solana/wallet-adapter-react'
+import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui'
+import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare'
+import { clusterApiUrl } from '@solana/web3.js'
+import '@solana/wallet-adapter-react-ui/styles.css'
 
 function formatAmount(amount) {
   amount = new BigNumber(amount);
@@ -35,6 +41,20 @@ const defaultSymbol = 'unknown';
 
 
 const networkConfigs = {
+  soldevnet: {
+    chain: mainnet,
+    chainId: 'Devnet',
+    name: 'Solana开发者网',
+    tokens: [
+      { value: 'mSOL', address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', symbol: 'mSOL', decimals: 18 },
+      { value: 'stSOL', address: '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', symbol: 'stSOL', decimals: 6 },
+      { value: 'USDC', address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', symbol: 'USDC', decimals: 6 },
+      { value: 'RAY', address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', symbol: 'RAY', decimals: 18 },
+      { value: 'SRM', address: 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt', symbol: 'SRM', decimals: 6 },
+      { value: 'MNGO', address: 'MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac', symbol: 'MNGO', decimals: 6 },
+      { value: 'custom', address: '', symbol: 'Custom Token' }
+    ]
+  },
   mainnet: {
     chain: mainnet,
     chainId: '0x1',
@@ -120,7 +140,7 @@ export default function Home() {
   const [insuranceList, setInsuranceList] = useState([
   ])
 
-  const [selectedNetwork, setSelectedNetwork] = useState('mainnet')
+  const [selectedNetwork, setSelectedNetwork] = useState('soldevnet')
   const [selectedToken, setSelectedToken] = useState('')
   const [selectedTokenDecimals, setSelectedTokenDecimals] = useState(18)
   const [customTokenSymbol, setCustomTokenSymbol] = useState('')
@@ -140,6 +160,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [language, setLanguage] = useState('En');
 
+  const network = WalletAdapterNetwork.Devnet;
+  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const { publicKey, connect, disconnect } = useWallet();
+
   const [publicClient, setPublicClient] = useState(createPublicClient({
     chain: networkConfigs[selectedNetwork].chain,
     transport: http()
@@ -148,6 +172,13 @@ export default function Home() {
   const [walletClient, setWalletClient] = useState(null)
 
   const [daysUntilWithdrawal, setDaysUntilWithdrawal] = useState(0);
+
+  const wallets = useMemo(
+    () => [
+      new SolflareWalletAdapter(),
+    ],
+    []
+  );
 
   useEffect(() => {
     setPublicClient(createPublicClient({
@@ -836,394 +867,440 @@ export default function Home() {
     return language == 'zh' ? chStr : enStr;
   }
 
+
+
+  const connectWallet = async () => {
+    if (!publicKey) {
+      try {
+        await connect();
+        toast({
+          title: "Wallet connected",
+          status: "success",
+          duration: 2000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error('Failed to connect wallet:', error);
+        toast({
+          title: "Failed to connect wallet",
+          description: error.message,
+          status: "error",
+          duration: 2000,
+          isClosable: true,
+        });
+      }
+    } else {
+      await disconnect();
+      toast({
+        title: "Wallet disconnected",
+        status: "info",
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
-    <Box as="main" py={20}>
-      <Flex px={6} py={4} position="fixed" top={0} left={0} right={0} bg="white" boxShadow="sm" zIndex={10}>
-        <Select value={selectedNetwork} onChange={(e) => handleNetworkChange(e.target.value)} width="200px">
-          <option value="mainnet">{_t("以太坊主网", "Ethereum Mainnet")}</option>
-          <option value="arbitrum">{_t("Arbitrum主网", "Arbitrum Mainnet")}</option>
-          {/* <option value="optimism">{_t("Optimism主网", "Optimism Mainnet")}</option> */}
-          <option value="base">{_t("Base主网", "Base Mainnet")}</option>
-          <option value="blast">{_t("Blast主网", "Blast Mainnet")}</option>
-          <option value="sepolia">{_t("Sepolia 测试网", "Sepolia Testnet")}</option>
-        </Select>
-        <Spacer />
-        <Button onClick={() => changeLanguage('en')} mr={2}>EN</Button>
-        <Button onClick={() => changeLanguage('zh')} mr={2}>中文</Button>
-        <IconButton
-          as="a"
-          href="https://x.com/socialins001" // 替换为你的推特链接
-          target="_blank" // 在新标签页中打开
-          aria-label="Twitter"
-          icon={<FaTwitter />}
-          colorScheme="blue"
-          variant="outline"
-          mr={2}
-        />
-        {isWalletConnected ? (
-          <Tooltip label={walletAddress} placement="bottom" hasArrow>
-            <Button 
-              onClick={handleWalletDisconnect}
-              variant="outline"
-              colorScheme="blue"
-            >
-              {`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}
-            </Button>
-          </Tooltip>
-        ) : (
-          <Button colorScheme="blue" onClick={handleWalletConnect}>
-            {_t("连接钱包", "Connect Wallet")}
-          </Button>
-        )}
-      </Flex>
-
-      <VStack spacing={10} mt={16}>
-        <Heading as="h1" size="4xl" fontWeight="bold" color="blue.600">
-          {_t("链上社保", "Social Insurance")}
-        </Heading>
-        <HStack spacing={6} flexWrap="wrap" justifyContent="center">
-          <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="blue">{_t("去中心化社保系统", "Decentralized")}</Badge>
-          <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="green">{_t("合约无Owner", "Without Owner")}</Badge>
-          <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="blue">{_t("风险隔离(一保单一合约)", "Risk Isolation")}</Badge>
-          <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="orange">{_t("按需定制", "Customizable")}</Badge>
-          <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="purple">{_t("投保资产无限制", "Support ERC20")}</Badge>
-        </HStack>
-        
-        <Box w="full" maxW="4xl" mt={10}>
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10}>
-            <Stat bg="blue.100" p={5} borderRadius="lg" boxShadow="md">
-              <StatLabel fontSize="xl" fontWeight="semibold" color="blue.800">{_t("总保单数", "Total Policies")}</StatLabel>
-              <StatNumber fontSize="4xl" fontWeight="bold" color="blue.600">{policyNumber}</StatNumber>
-              <StatHelpText fontSize="md" color="blue.800">
-              {_t("较上月增长", "Increase from last month")} <Box as="span" color="green.600" fontWeight="bold">0</Box>
-              </StatHelpText>
-            </Stat>
-            <Stat bg="green.100" p={5} borderRadius="lg" boxShadow="md">
-              <StatLabel fontSize="xl" fontWeight="semibold" color="green.800">{_t("累计投入金额", "Total Invested Amount")}</StatLabel>
-              <HStack justifyContent="left" alignItems="center">
-                <StatNumber fontSize="4xl" fontWeight="bold" color="green.600">{_t("统计中...", "Calculating...")}</StatNumber>
-              </HStack>
-              <StatHelpText fontSize="md" color="green.800">
-              {_t("较上月增长", "Increase from last month")} <Box as="span" color="green.600" fontWeight="bold">0%</Box>
-              </StatHelpText>
-            </Stat>
-            <Stat bg="purple.100" p={5} borderRadius="lg" boxShadow="md">
-              <StatLabel fontSize="xl" fontWeight="semibold" color="purple.800">{_t("当前领取社保人数", "Current Beneficiaries")}</StatLabel>
-              <StatNumber fontSize="4xl" fontWeight="bold" color="purple.600">{curBeneficiaryNum}</StatNumber>
-              <StatHelpText fontSize="md" color="purple.800">
-              {_t("本月新增", "New this month")} <Box as="span" color="green.600" fontWeight="bold">0</Box>
-              </StatHelpText>
-            </Stat>
-          </SimpleGrid>
-        </Box>
-
-        <Box w="full" maxW="4xl" mt={10}>
-          <Heading as="h2" size="xl" mb={6}>{_t("我的社保", "My Social Insurance")}</Heading>
-          {
-            isLoading ? (
-              <Center>
-                <Spinner size="xl" />
-              </Center>
-            ) : userContracts.length > 0 ? (
-              <TableContainer>
-                <Table variant="simple">
-                  <Thead>
-                    {
-                      language === 'zh' ? 
-                        <Tr>
-                          <Th>投保时间</Th>
-                          <Th>合约</Th>
-                          <Th>投保人</Th>
-                          <Th>受益人</Th>
-                          <Th>投保Token</Th>
-                          <Th>每月缴纳</Th>
-                          <Th>已缴纳</Th>
-                          <Th>待补充</Th>
-                          <Th>保单余额</Th>
-                          <Th>开始领取日</Th>
-                          <Th>每月领取</Th>
-                          <Th>当前可领取</Th>
-                          <Th>紧急提现人</Th>
-                          <Th>操作</Th>
-                        </Tr>
-                        :
-                        <Tr>
-                          <Th>Insurance Time</Th>
-                          <Th>Contract</Th>
-                          <Th>Policyholder</Th>
-                          <Th>Beneficiary</Th>
-                          <Th>Insured Token</Th>
-                          <Th>Monthly Contribution</Th>
-                          <Th>Paid</Th>
-                          <Th>To Be Supplemented</Th>
-                          <Th>Policy Balance</Th>
-                          <Th>Start Withdrawal Date</Th>
-                          <Th>Monthly Withdrawal</Th>
-                          <Th>Currently Withdrawable</Th>
-                          <Th>Emergency Withdrawal Address</Th>
-                          <Th>Actions</Th>
-                        </Tr>
-                    }
-                    
-                  </Thead>
-                  <Tbody>
-                    {insuranceList.map(insurance => {
-                      console.log(insurance.contractAddress, policyTokenInfo[insurance.contractAddress])
-                      const decimals = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].decimals : defaultDecimals;
-                      const symbol = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].symbol : defaultSymbol;
-                      const balance = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].balance : 0;
-                      const balanceShouldbePaid = insurance.monthlyWithdrawal.multipliedBy(parseInt((new Date().getTime() / 1000 - insurance.initialTime) / (30 * oneDaySeconds) + ''));
-                      let paidBalance = balanceShouldbePaid;
-                      let toBePaidBalance = new BigNumber(0);
-                      let withdrawableBalance = new BigNumber(0);
-                      let startWithdrawTime = insurance.initialTime + insurance.daysUntilWithdrawal * oneDaySeconds;
-                      
-                      const curTime = Math.floor(new Date().getTime() / 1000);
-                      let curAvailableFunds = curTime > startWithdrawTime ? (Math.floor((curTime - startWithdrawTime) / oneDaySeconds) - Math.floor((insurance.lastWithdrawalTime - startWithdrawTime) / oneDaySeconds)) * insurance.monthlyWithdrawal : 0;
-                      if (new BigNumber(balance).lt(curAvailableFunds)) {
-                        curAvailableFunds = balance;
-                      }
-                      if (new BigNumber(balance).lt(balanceShouldbePaid)) {
-                        paidBalance = new BigNumber(balance);
-                        toBePaidBalance = new BigNumber(balanceShouldbePaid).minus(balance);
-                      } else {
-                        withdrawableBalance = new BigNumber(balance).minus(balanceShouldbePaid);
-                      }
-                      return <Tr key={insurance.contract}>
-                        <Td>{new Date(insurance.initialTime * 1000).toLocaleString()}</Td>
-                        <Td><CopyableAddress address={insurance.contractAddress} /></Td>
-                        <Td><CopyableAddress address={insurance.policyHolder} /></Td>
-                        <Td><CopyableAddress address={insurance.beneficiary} /></Td>
-                        <Td><CopyableAddress address={insurance.depositedToken} /></Td>
-                        <Td>{formatAmount(new BigNumber(insurance.monthlyContribution).shiftedBy(-1 * decimals))} {symbol}</Td>
-                        <Td>{formatAmount(paidBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
-                        <Td>{formatAmount(toBePaidBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
-                        <Td>{formatAmount(withdrawableBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
-                        <Td>{new Date((startWithdrawTime) * 1000).toLocaleString()}</Td>
-                        <Td>{formatAmount(new BigNumber(insurance.monthlyWithdrawal).shiftedBy(-1 * decimals))} {symbol}</Td>
-                        <Td>{formatAmount(new BigNumber(curAvailableFunds).shiftedBy(-1 * decimals))} {symbol}</Td>
-                        <Td><CopyableAddress address={insurance.emergencyAddress} /></Td>
-                        {
-                          insurance.isContractActive ? 
-                            <Td>
-                              <ButtonGroup size="sm" variant="outline">                        
-                                {
-                                  walletAddress.toUpperCase() === insurance.beneficiary.toUpperCase() 
-                                  && <Button colorScheme="green" onClick={() => handleClaimFunds(insurance.contractAddress)} isLoading={claimingFunds} loadingText={_t("领取中", "Claiming")}>{_t("领取社保", "Claim Insurance")}</Button>
-                                }
-                                {
-                                  walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() 
-                                  && <Button colorScheme="blue" onClick={() => handleDeposit(insurance.contractAddress, insurance.depositedToken, symbol, decimals)}>{_t("充值", "Deposit")}</Button>
-                                }
-                                {
-                                  walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() 
-                                  && <Button colorScheme="yellow" onClick={() => handleWithdrawBalance(insurance.contractAddress)} isLoading={withdrawing} loadingText={_t("提取中", "Withdrawing")}>{_t("提取余额", "Withdraw Balance")}</Button>
-                                }
-                                {
-                                  (walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() || walletAddress.toUpperCase() === insurance.emergencyAddress.toUpperCase()) 
-                                  && <Button colorScheme="red" onClick={() => handleCloseAccount(insurance.contractAddress)} isLoading={emergencyWithdrawing} loadingText={_t("销户&提现中", "Closing & Withdrawing")}>{_t("销户&提现", "Close Account & Withdraw")}</Button>
-                                }
-                              </ButtonGroup>
-                          </Td>
-                          :
-                          <Td>{_t("已销户", "Account Closed")}</Td>
-                        }
-                        
-                      </Tr>
-                    })}
-                  </Tbody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Text>{_t("您还没有社保记录。", "You don't have any social insurance records yet.")}</Text>
-            )
-          }         
-        </Box>
-
-        <Button colorScheme="blue" size="lg" onClick={() => setIsOpen(true)}>
-        {_t("创建我的社保", "Create My Social Insurance")}
-        </Button>
-
-        <Modal isOpen={isOpenDepositDialog} onClose={() => setIsOpenDepositDialog(false)}>
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>{_t("给保单充值", "Deposit to Policy")}</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <FormControl>
-                <FormLabel>{_t("充值金额", "Deposit Amount")}({curPolicyInfo.depositedTokenSymbol})</FormLabel>
-                <NumberInput min={0} onChange={(_, value) => setDepositAmount(value)}>
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
-            </ModalBody>
-
-            <ModalFooter>
-              <Button colorScheme="blue" mr={3} onClick={handleDepositConfirm} isLoading={depositing} loadingText={_t("充值中", "Depositing")}>
-              {_t("充值", "Deposit")}
-              </Button>
-              <Button variant="ghost" onClick={() => setIsOpenDepositDialog(false)}>{_t("取消", "Cancel")}</Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-
-        <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} size="xl">
-          <ModalOverlay backdropFilter="blur(10px)" />
-          <ModalContent borderRadius="xl" boxShadow="xl">
-            <ModalHeader bg="blue.500" color="white" borderTopRadius="xl">{_t("创建我的社保", "Create My Social Insurance")}</ModalHeader>
-            <ModalCloseButton color="white" />
-            <ModalBody py={6}>
-              <VStack spacing={6}>
-                <FormControl>
-                  <FormLabel fontWeight="bold">{_t("选择社保代币", "Select Insurance Token")}</FormLabel>
-                  <Select value={selectedToken} onChange={handleTokenChange}>
-                    {networkConfigs[selectedNetwork].tokens.map(option => (
-                      <option key={option.address} value={option.value}>{`${option.symbol} ${option.address ? ' - ' : ''} ${option.address}`}</option>
-                    ))}
-                  </Select>
-                </FormControl>
-                {selectedToken === 'custom' && (
-                  <FormControl>
-                    <FormLabel fontWeight="bold">{_t("自定义代币地址", "Custom Token Address")}</FormLabel>
-                    <Input 
-                      value={customTokenAddress} 
-                      onChange={(e) => setCustomTokenAddress(e.target.value)}
-                      placeholder={_t("输入代币合约地址", "Enter token contract address")}
-                    />
-                  </FormControl>
-                )}
-                {(selectedToken !== 'custom' || (selectedToken === 'custom' && customTokenAddress)) && (
-                  <Text>{_t("您的余额: ", "Your Balance: ")}{userBalance} {getTokenSymbol()}</Text>
-                )}                
-                <FormControl>
-                  <FormLabel fontWeight="bold">{_t("每月缴纳金额", "Monthly Contribution Amount")}</FormLabel>
-                  <InputGroup>
-                    <InputLeftAddon children={getTokenSymbol()} />
-                    <NumberInput min={0} w="full" precision={3}>
-                      <NumberInputField name="monthlyContribution" value={formData.monthlyContribution} onChange={handleInputChange} borderLeftRadius={0} />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </InputGroup>
-                </FormControl>
-                <FormControl>
-                  <FormLabel fontWeight="bold">
-                  {_t("领取年限", "Years Until Withdrawal")}
-                    <Tooltip label={_t("设置多久后可以开始领取社保，支持小数，实际按天数计算", "Set how long until you can start withdrawing insurance, supports decimals, calculated in days")} placement="top">
-                      <Icon as={InfoIcon} ml={1} color="blue.500" />
-                    </Tooltip>
-                  </FormLabel>
-                  <InputGroup>
-                    <NumberInput min={0} w="full" precision={3}>
-                      <NumberInputField name="yearsUntilWithdrawal" value={formData.yearsUntilWithdrawal} onChange={handleInputChange} />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                    <InputRightAddon children={_t("年", "years")} />
-                  </InputGroup>
-                  <Text fontSize="sm" color="gray.600" mt={1}>
-                  {_t("共计", "Total")} {daysUntilWithdrawal} {_t("天", "days")}
-                  </Text>
-                </FormControl>
-                <FormControl>
-                  <FormLabel fontWeight="bold">{_t("每月领取金额", "Monthly Claim Amount")}</FormLabel>
-                  <InputGroup>
-                    <InputLeftAddon children={getTokenSymbol()} />
-                    <NumberInput min={0} w="full" precision={3}>
-                      <NumberInputField name="monthlyWithdrawal" value={formData.monthlyWithdrawal} onChange={handleInputChange} borderLeftRadius={0} />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </InputGroup>
-                </FormControl>
-                <FormControl>
-                  <FormLabel fontWeight="bold">
-                  {_t("受益人地址", "Beneficiary Address")}
-                    <Tooltip label={_t("在达到领取年限后，仅受益人可提取社保", "Only the beneficiary can withdraw insurance after reaching the withdrawal period")} placement="top">
-                      <Icon as={InfoIcon} ml={1} color="blue.500" />
-                    </Tooltip>
-                  </FormLabel>
-                  <Input name="beneficiary" value={formData.beneficiary} onChange={handleInputChange} placeholder="0x..." />
-                </FormControl>
-                <FormControl>
-                  <FormLabel fontWeight="bold">
-                  {_t("紧急提取地址", "Emergency Withdrawal Address")}
-                    <Tooltip label={_t("在发生特殊情况时，此地址可发起提取所有账户余额的操作，余额全部转给受益人", "This address can initiate the operation to withdraw all account balances, transferring all balances to the beneficiary.")} placement="top">
-                      <Icon as={InfoIcon} ml={1} color="blue.500" />
-                    </Tooltip>
-                  </FormLabel>
-                  <Input name="emergencyAddress" value={formData.emergencyAddress} onChange={handleInputChange} placeholder="0x..." />
-                </FormControl>
-              </VStack>
-            </ModalBody>
-            <ModalFooter bg="gray.50" borderBottomRadius="xl" flexDirection="column" alignItems="stretch">
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>
+          <Box as="main" py={20}>
+            <Flex px={6} py={4} position="fixed" top={0} left={0} right={0} bg="white" boxShadow="sm" zIndex={10}>
+              <Select value={selectedNetwork} onChange={(e) => handleNetworkChange(e.target.value)} width="200px">
+                <option value="soldevnet">{_t("Solana开发者网络", "Solana Devnet")}</option>
+                <option value="mainnet">{_t("以太坊主网", "Ethereum Mainnet")}</option>
+                <option value="arbitrum">{_t("Arbitrum主网", "Arbitrum Mainnet")}</option>
+                {/* <option value="optimism">{_t("Optimism主网", "Optimism Mainnet")}</option> */}
+                <option value="base">{_t("Base主网", "Base Mainnet")}</option>
+                <option value="blast">{_t("Blast主网", "Blast Mainnet")}</option>
+                <option value="sepolia">{_t("Sepolia 测试网", "Sepolia Testnet")}</option>
+              </Select>
+              <Spacer />
+              <Button onClick={() => changeLanguage('en')} mr={2}>EN</Button>
+              <Button onClick={() => changeLanguage('zh')} mr={2}>中文</Button>
+              <IconButton
+                as="a"
+                href="https://x.com/socialins001" // 替换为你的推特链接
+                target="_blank" // 在新标签页中打开
+                aria-label="Twitter"
+                icon={<FaTwitter />}
+                colorScheme="blue"
+                variant="outline"
+                mr={2}
+              />
               {
-                language == 'zh' ?
-                  <Box mb={4} textAlign="left">
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      说明：
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      投保人可在任何时候销毁账户，此时保单内剩余资产都会转给受益人
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      投保人可在任何时候提取保单内尚未投保的资金，此部分资金将转给投保人
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      本平台不收取任何费用，每张保单一个合约，并且无owner权限，完全去中心化
-                    </Text>
-                    <Text fontSize="sm" color="gray.600">
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      创建保单过程无需支付或转移任何Token，仅需支付上链的Gas费
-                    </Text>
-                  </Box>
+                selectedNetwork == 'soldevnet' ?
+                  <WalletMultiButton />
                   :
-                  <Box mb={4} textAlign="left">
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      Notes:
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      The policyholder can destroy the account at any time, and all remaining assets in the policy will be transferred to the beneficiary
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      The policyholder can withdraw funds not yet insured from the policy at any time, these funds will be transferred to the policyholder
-                    </Text>
-                    <Text fontSize="sm" color="gray.600" mb={2}>
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      This platform does not charge any fees, each policy has its own contract, and there is no owner authority, completely decentralized
-                    </Text>
-                    <Text fontSize="sm" color="gray.600">
-                      <Icon as={InfoIcon} mr={1} color="blue.500" />
-                      Creating a policy does not require payment or transfer of any tokens, only gas fees for on-chain transactions are needed
-                    </Text>
-                  </Box>
+                  isWalletConnected ? (
+                    <Tooltip label={walletAddress} placement="bottom" hasArrow>
+                      <Button 
+                        onClick={handleWalletDisconnect}
+                        variant="outline"
+                        colorScheme="blue"
+                      >
+                        {`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}
+                      </Button>
+                    </Tooltip>
+                  ) : (
+                    <Button colorScheme="blue" onClick={handleWalletConnect}>
+                      {publicKey ? _t("断开钱包", "Disconnect") : _t("连接钱包", "Connect Wallet")}
+                    </Button>
+                  )
               }
               
-              <HStack justifyContent="center">
-                <Button colorScheme="blue" mr={3} onClick={handleSubmit} size="lg" isLoading={creating} loadingText={_t("创建中", "Creating")}>
-                {_t("创建保单", "Create Policy")}
-                </Button>
-                <Button variant="outline" onClick={() => setIsOpen(false)} size="lg">{_t("取消", "Cancel")}</Button>
+            </Flex>
+
+            <VStack spacing={10} mt={16}>
+              <Heading as="h1" size="4xl" fontWeight="bold" color="blue.600">
+                {_t("链上社保", "Social Insurance")}
+              </Heading>
+              <HStack spacing={6} flexWrap="wrap" justifyContent="center">
+                <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="blue">{_t("去中心化社保系统", "Decentralized")}</Badge>
+                <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="green">{_t("合约无Owner", "Without Owner")}</Badge>
+                <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="blue">{_t("风险隔离(一保单一合约)", "Risk Isolation")}</Badge>
+                <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="orange">{_t("按需定制", "Customizable")}</Badge>
+                <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="purple">{_t("投保资产无限制", "Support ERC20")}</Badge>
               </HStack>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      </VStack>
-    </Box>
+              
+              <Box w="full" maxW="4xl" mt={10}>
+                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={10}>
+                  <Stat bg="blue.100" p={5} borderRadius="lg" boxShadow="md">
+                    <StatLabel fontSize="xl" fontWeight="semibold" color="blue.800">{_t("总保单数", "Total Policies")}</StatLabel>
+                    <StatNumber fontSize="4xl" fontWeight="bold" color="blue.600">{policyNumber}</StatNumber>
+                    <StatHelpText fontSize="md" color="blue.800">
+                    {_t("较上月增长", "Increase from last month")} <Box as="span" color="green.600" fontWeight="bold">0</Box>
+                    </StatHelpText>
+                  </Stat>
+                  <Stat bg="green.100" p={5} borderRadius="lg" boxShadow="md">
+                    <StatLabel fontSize="xl" fontWeight="semibold" color="green.800">{_t("累计投入金额", "Total Invested Amount")}</StatLabel>
+                    <HStack justifyContent="left" alignItems="center">
+                      <StatNumber fontSize="4xl" fontWeight="bold" color="green.600">{_t("统计中...", "Calculating...")}</StatNumber>
+                    </HStack>
+                    <StatHelpText fontSize="md" color="green.800">
+                    {_t("较上月增长", "Increase from last month")} <Box as="span" color="green.600" fontWeight="bold">0%</Box>
+                    </StatHelpText>
+                  </Stat>
+                  <Stat bg="purple.100" p={5} borderRadius="lg" boxShadow="md">
+                    <StatLabel fontSize="xl" fontWeight="semibold" color="purple.800">{_t("当前领取社保人数", "Current Beneficiaries")}</StatLabel>
+                    <StatNumber fontSize="4xl" fontWeight="bold" color="purple.600">{curBeneficiaryNum}</StatNumber>
+                    <StatHelpText fontSize="md" color="purple.800">
+                    {_t("本月新增", "New this month")} <Box as="span" color="green.600" fontWeight="bold">0</Box>
+                    </StatHelpText>
+                  </Stat>
+                </SimpleGrid>
+              </Box>
+
+              <Box w="full" maxW="4xl" mt={10}>
+                <Heading as="h2" size="xl" mb={6}>{_t("我的社保", "My Social Insurance")}</Heading>
+                {
+                  isLoading ? (
+                    <Center>
+                      <Spinner size="xl" />
+                    </Center>
+                  ) : userContracts.length > 0 ? (
+                    <TableContainer>
+                      <Table variant="simple">
+                        <Thead>
+                          {
+                            language === 'zh' ? 
+                              <Tr>
+                                <Th>投保时间</Th>
+                                <Th>合约</Th>
+                                <Th>投保人</Th>
+                                <Th>受益人</Th>
+                                <Th>投保Token</Th>
+                                <Th>每月缴纳</Th>
+                                <Th>已缴纳</Th>
+                                <Th>待补充</Th>
+                                <Th>保单余额</Th>
+                                <Th>开始领取日</Th>
+                                <Th>每月领取</Th>
+                                <Th>当前可领取</Th>
+                                <Th>紧急提现人</Th>
+                                <Th>操作</Th>
+                              </Tr>
+                              :
+                              <Tr>
+                                <Th>Insurance Time</Th>
+                                <Th>Contract</Th>
+                                <Th>Policyholder</Th>
+                                <Th>Beneficiary</Th>
+                                <Th>Insured Token</Th>
+                                <Th>Monthly Contribution</Th>
+                                <Th>Paid</Th>
+                                <Th>To Be Supplemented</Th>
+                                <Th>Policy Balance</Th>
+                                <Th>Start Withdrawal Date</Th>
+                                <Th>Monthly Withdrawal</Th>
+                                <Th>Currently Withdrawable</Th>
+                                <Th>Emergency Withdrawal Address</Th>
+                                <Th>Actions</Th>
+                              </Tr>
+                          }
+                          
+                        </Thead>
+                        <Tbody>
+                          {insuranceList.map(insurance => {
+                            console.log(insurance.contractAddress, policyTokenInfo[insurance.contractAddress])
+                            const decimals = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].decimals : defaultDecimals;
+                            const symbol = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].symbol : defaultSymbol;
+                            const balance = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].balance : 0;
+                            const balanceShouldbePaid = insurance.monthlyWithdrawal.multipliedBy(parseInt((new Date().getTime() / 1000 - insurance.initialTime) / (30 * oneDaySeconds) + ''));
+                            let paidBalance = balanceShouldbePaid;
+                            let toBePaidBalance = new BigNumber(0);
+                            let withdrawableBalance = new BigNumber(0);
+                            let startWithdrawTime = insurance.initialTime + insurance.daysUntilWithdrawal * oneDaySeconds;
+                            
+                            const curTime = Math.floor(new Date().getTime() / 1000);
+                            let curAvailableFunds = curTime > startWithdrawTime ? (Math.floor((curTime - startWithdrawTime) / oneDaySeconds) - Math.floor((insurance.lastWithdrawalTime - startWithdrawTime) / oneDaySeconds)) * insurance.monthlyWithdrawal : 0;
+                            if (new BigNumber(balance).lt(curAvailableFunds)) {
+                              curAvailableFunds = balance;
+                            }
+                            if (new BigNumber(balance).lt(balanceShouldbePaid)) {
+                              paidBalance = new BigNumber(balance);
+                              toBePaidBalance = new BigNumber(balanceShouldbePaid).minus(balance);
+                            } else {
+                              withdrawableBalance = new BigNumber(balance).minus(balanceShouldbePaid);
+                            }
+                            return <Tr key={insurance.contract}>
+                              <Td>{new Date(insurance.initialTime * 1000).toLocaleString()}</Td>
+                              <Td><CopyableAddress address={insurance.contractAddress} /></Td>
+                              <Td><CopyableAddress address={insurance.policyHolder} /></Td>
+                              <Td><CopyableAddress address={insurance.beneficiary} /></Td>
+                              <Td><CopyableAddress address={insurance.depositedToken} /></Td>
+                              <Td>{formatAmount(new BigNumber(insurance.monthlyContribution).shiftedBy(-1 * decimals))} {symbol}</Td>
+                              <Td>{formatAmount(paidBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
+                              <Td>{formatAmount(toBePaidBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
+                              <Td>{formatAmount(withdrawableBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
+                              <Td>{new Date((startWithdrawTime) * 1000).toLocaleString()}</Td>
+                              <Td>{formatAmount(new BigNumber(insurance.monthlyWithdrawal).shiftedBy(-1 * decimals))} {symbol}</Td>
+                              <Td>{formatAmount(new BigNumber(curAvailableFunds).shiftedBy(-1 * decimals))} {symbol}</Td>
+                              <Td><CopyableAddress address={insurance.emergencyAddress} /></Td>
+                              {
+                                insurance.isContractActive ? 
+                                  <Td>
+                                    <ButtonGroup size="sm" variant="outline">                        
+                                      {
+                                        walletAddress.toUpperCase() === insurance.beneficiary.toUpperCase() 
+                                        && <Button colorScheme="green" onClick={() => handleClaimFunds(insurance.contractAddress)} isLoading={claimingFunds} loadingText={_t("领取中", "Claiming")}>{_t("领取社保", "Claim Insurance")}</Button>
+                                      }
+                                      {
+                                        walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() 
+                                        && <Button colorScheme="blue" onClick={() => handleDeposit(insurance.contractAddress, insurance.depositedToken, symbol, decimals)}>{_t("充值", "Deposit")}</Button>
+                                      }
+                                      {
+                                        walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() 
+                                        && <Button colorScheme="yellow" onClick={() => handleWithdrawBalance(insurance.contractAddress)} isLoading={withdrawing} loadingText={_t("提取中", "Withdrawing")}>{_t("提取余额", "Withdraw Balance")}</Button>
+                                      }
+                                      {
+                                        (walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() || walletAddress.toUpperCase() === insurance.emergencyAddress.toUpperCase()) 
+                                        && <Button colorScheme="red" onClick={() => handleCloseAccount(insurance.contractAddress)} isLoading={emergencyWithdrawing} loadingText={_t("销户&提现中", "Closing & Withdrawing")}>{_t("销户&提现", "Close Account & Withdraw")}</Button>
+                                      }
+                                    </ButtonGroup>
+                                </Td>
+                                :
+                                <Td>{_t("已销户", "Account Closed")}</Td>
+                              }
+                              
+                            </Tr>
+                          })}
+                        </Tbody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Text>{_t("您还没有社保记录。", "You don't have any social insurance records yet.")}</Text>
+                  )
+                }         
+              </Box>
+
+              <Button colorScheme="blue" size="lg" onClick={() => setIsOpen(true)}>
+              {_t("创建我的社保", "Create My Social Insurance")}
+              </Button>
+
+              <Modal isOpen={isOpenDepositDialog} onClose={() => setIsOpenDepositDialog(false)}>
+                <ModalOverlay />
+                <ModalContent>
+                  <ModalHeader>{_t("给保单充值", "Deposit to Policy")}</ModalHeader>
+                  <ModalCloseButton />
+                  <ModalBody>
+                    <FormControl>
+                      <FormLabel>{_t("充值金额", "Deposit Amount")}({curPolicyInfo.depositedTokenSymbol})</FormLabel>
+                      <NumberInput min={0} onChange={(_, value) => setDepositAmount(value)}>
+                        <NumberInputField />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    </FormControl>
+                  </ModalBody>
+
+                  <ModalFooter>
+                    <Button colorScheme="blue" mr={3} onClick={handleDepositConfirm} isLoading={depositing} loadingText={_t("充值中", "Depositing")}>
+                    {_t("充值", "Deposit")}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setIsOpenDepositDialog(false)}>{_t("取消", "Cancel")}</Button>
+                  </ModalFooter>
+                </ModalContent>
+              </Modal>
+
+              <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} size="xl">
+                <ModalOverlay backdropFilter="blur(10px)" />
+                <ModalContent borderRadius="xl" boxShadow="xl">
+                  <ModalHeader bg="blue.500" color="white" borderTopRadius="xl">{_t("创建我的社保", "Create My Social Insurance")}</ModalHeader>
+                  <ModalCloseButton color="white" />
+                  <ModalBody py={6}>
+                    <VStack spacing={6}>
+                      <FormControl>
+                        <FormLabel fontWeight="bold">{_t("选择社保代币", "Select Insurance Token")}</FormLabel>
+                        <Select value={selectedToken} onChange={handleTokenChange}>
+                          {networkConfigs[selectedNetwork].tokens.map(option => (
+                            <option key={option.address} value={option.value}>{`${option.symbol} ${option.address ? ' - ' : ''} ${option.address}`}</option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {selectedToken === 'custom' && (
+                        <FormControl>
+                          <FormLabel fontWeight="bold">{_t("自定义代币地址", "Custom Token Address")}</FormLabel>
+                          <Input 
+                            value={customTokenAddress} 
+                            onChange={(e) => setCustomTokenAddress(e.target.value)}
+                            placeholder={_t("输入代币合约地址", "Enter token contract address")}
+                          />
+                        </FormControl>
+                      )}
+                      {(selectedToken !== 'custom' || (selectedToken === 'custom' && customTokenAddress)) && (
+                        <Text>{_t("您的余额: ", "Your Balance: ")}{userBalance} {getTokenSymbol()}</Text>
+                      )}                
+                      <FormControl>
+                        <FormLabel fontWeight="bold">{_t("每月缴纳金额", "Monthly Contribution Amount")}</FormLabel>
+                        <InputGroup>
+                          <InputLeftAddon children={getTokenSymbol()} />
+                          <NumberInput min={0} w="full" precision={3}>
+                            <NumberInputField name="monthlyContribution" value={formData.monthlyContribution} onChange={handleInputChange} borderLeftRadius={0} />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                        </InputGroup>
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontWeight="bold">
+                        {_t("领取年限", "Years Until Withdrawal")}
+                          <Tooltip label={_t("设置多久后可以开始领取社保，支持小数，实际按天数计算", "Set how long until you can start withdrawing insurance, supports decimals, calculated in days")} placement="top">
+                            <Icon as={InfoIcon} ml={1} color="blue.500" />
+                          </Tooltip>
+                        </FormLabel>
+                        <InputGroup>
+                          <NumberInput min={0} w="full" precision={3}>
+                            <NumberInputField name="yearsUntilWithdrawal" value={formData.yearsUntilWithdrawal} onChange={handleInputChange} />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                          <InputRightAddon children={_t("年", "years")} />
+                        </InputGroup>
+                        <Text fontSize="sm" color="gray.600" mt={1}>
+                        {_t("共计", "Total")} {daysUntilWithdrawal} {_t("天", "days")}
+                        </Text>
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontWeight="bold">{_t("每月领取金额", "Monthly Claim Amount")}</FormLabel>
+                        <InputGroup>
+                          <InputLeftAddon children={getTokenSymbol()} />
+                          <NumberInput min={0} w="full" precision={3}>
+                            <NumberInputField name="monthlyWithdrawal" value={formData.monthlyWithdrawal} onChange={handleInputChange} borderLeftRadius={0} />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                        </InputGroup>
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontWeight="bold">
+                        {_t("受益人地址", "Beneficiary Address")}
+                          <Tooltip label={_t("在达到领取年限后，仅受益人可提取社保", "Only the beneficiary can withdraw insurance after reaching the withdrawal period")} placement="top">
+                            <Icon as={InfoIcon} ml={1} color="blue.500" />
+                          </Tooltip>
+                        </FormLabel>
+                        <Input name="beneficiary" value={formData.beneficiary} onChange={handleInputChange} placeholder="0x..." />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontWeight="bold">
+                        {_t("紧急提取地址", "Emergency Withdrawal Address")}
+                          <Tooltip label={_t("在发生特殊情况时，此地址可发起提取所有账户余额的操作，余额全部转给受益人", "This address can initiate the operation to withdraw all account balances, transferring all balances to the beneficiary.")} placement="top">
+                            <Icon as={InfoIcon} ml={1} color="blue.500" />
+                          </Tooltip>
+                        </FormLabel>
+                        <Input name="emergencyAddress" value={formData.emergencyAddress} onChange={handleInputChange} placeholder="0x..." />
+                      </FormControl>
+                    </VStack>
+                  </ModalBody>
+                  <ModalFooter bg="gray.50" borderBottomRadius="xl" flexDirection="column" alignItems="stretch">
+                    {
+                      language == 'zh' ?
+                        <Box mb={4} textAlign="left">
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            说明：
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            投保人可在任何时候销毁账户，此时保单内剩余资产都会转给受益人
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            投保人可在任何时候提取保单内尚未投保的资金，此部分资金将转给投保人
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            本平台不收取任何费用，每张保单一个合约，并且无owner权限，完全去中心化
+                          </Text>
+                          <Text fontSize="sm" color="gray.600">
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            创建保单过程无需支付或转移任何Token，仅需支付上链的Gas费
+                          </Text>
+                        </Box>
+                        :
+                        <Box mb={4} textAlign="left">
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            Notes:
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            The policyholder can destroy the account at any time, and all remaining assets in the policy will be transferred to the beneficiary
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            The policyholder can withdraw funds not yet insured from the policy at any time, these funds will be transferred to the policyholder
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            This platform does not charge any fees, each policy has its own contract, and there is no owner authority, completely decentralized
+                          </Text>
+                          <Text fontSize="sm" color="gray.600">
+                            <Icon as={InfoIcon} mr={1} color="blue.500" />
+                            Creating a policy does not require payment or transfer of any tokens, only gas fees for on-chain transactions are needed
+                          </Text>
+                        </Box>
+                    }
+                    
+                    <HStack justifyContent="center">
+                      <Button colorScheme="blue" mr={3} onClick={handleSubmit} size="lg" isLoading={creating} loadingText={_t("创建中", "Creating")}>
+                      {_t("创建保单", "Create Policy")}
+                      </Button>
+                      <Button variant="outline" onClick={() => setIsOpen(false)} size="lg">{_t("取消", "Cancel")}</Button>
+                    </HStack>
+                  </ModalFooter>
+                </ModalContent>
+              </Modal>
+            </VStack>
+          </Box>
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
   )
 }
