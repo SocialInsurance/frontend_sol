@@ -7,7 +7,8 @@ import {
   FormControl, FormLabel, Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
   InputGroup, InputLeftAddon, InputRightAddon, Tooltip, Icon, Text,
   Table, Thead, Tbody, Tr, Th, Td, TableContainer,
-  Flex, Spacer, useToast, Select, ButtonGroup, Spinner, Center, IconButton
+  Flex, Spacer, useToast, Select, ButtonGroup, Spinner, Center, IconButton,
+  Card, CardHeader, CardBody, CardFooter, Divider, CopyIcon, useColorModeValue
 } from '@chakra-ui/react'
 import Link from 'next/link'
 import { InfoIcon, InfoOutlineIcon } from '@chakra-ui/icons'
@@ -16,7 +17,6 @@ import { flare, mainnet, sepolia, blast, base, arbitrum, optimism } from 'viem/c
 import ssFactoryJson from './contracts/ssFactory.json'
 import ss from './contracts/ss.json'
 import BigNumber from 'bignumber.js';
-import CopyableAddress from './CopyableAddress';
 import { FaTwitter } from 'react-icons/fa';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { ConnectionProvider, WalletProvider, useWallet } from '@solana/wallet-adapter-react'
@@ -24,6 +24,7 @@ import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-r
 import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare'
 import { clusterApiUrl } from '@solana/web3.js'
 import '@solana/wallet-adapter-react-ui/styles.css'
+import CopyableAddress from './CopyableAddress';
 
 function formatAmount(amount) {
   amount = new BigNumber(amount);
@@ -115,6 +116,7 @@ const networkConfigs = {
 };
 
 const soldevnet = 'soldevnet'
+
 
 export default function Home() {
   //const router = useRouter()
@@ -913,6 +915,17 @@ export default function Home() {
     }
   };
 
+  // const CopyableAddress = ({ address }) => {
+  //   return (
+  //     <Tooltip label={_t("复制地址", "Copy Address")}>
+  //       <HStack spacing={1} cursor="pointer" onClick={() => navigator.clipboard.writeText(address)}>
+  //         <Text fontSize="sm">{shortenAddress(address)}</Text>
+  //         <CopyIcon boxSize={3} />
+  //       </HStack>
+  //     </Tooltip>
+  //   );
+  // };
+
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
@@ -1026,123 +1039,166 @@ export default function Home() {
                 </SimpleGrid>
               </Box>
 
-              <Box w="full" maxW="4xl" mt={10}>
+              <Box w="full" maxW="6xl" mt={10}>
                 <Heading as="h2" size="xl" mb={6}>{_t("我的社保", "My Social Insurance")}</Heading>
                 {
                   isLoading ? (
                     <Center>
                       <Spinner size="xl" />
                     </Center>
-                  ) : userContracts.length >= 0 ? (
-                    <TableContainer>
-                      <Table variant="simple">
-                        <Thead>
-                          {
-                            language === 'zh' ? 
-                              <Tr>
-                                <Th>投保时间</Th>
-                                <Th>合约</Th>
-                                <Th>投保人</Th>
-                                <Th>受益人</Th>
-                                <Th>投保Token</Th>
-                                <Th>每月缴纳</Th>
-                                <Th>已缴纳</Th>
-                                <Th>待补充</Th>
-                                <Th>保单余额</Th>
-                                <Th>开始领取日</Th>
-                                <Th>每月领取</Th>
-                                <Th>当前可领取</Th>
-                                <Th>紧急提现人</Th>
-                                <Th>操作</Th>
-                              </Tr>
-                              :
-                              <Tr>
-                                <Th>Insurance Time</Th>
-                                <Th>Contract</Th>
-                                <Th>Policyholder</Th>
-                                <Th>Beneficiary</Th>
-                                <Th>Insured Token</Th>
-                                <Th>Monthly Contribution</Th>
-                                <Th>Paid</Th>
-                                <Th>To Be Supplemented</Th>
-                                <Th>Policy Balance</Th>
-                                <Th>Start Withdrawal Date</Th>
-                                <Th>Monthly Withdrawal</Th>
-                                <Th>Currently Withdrawable</Th>
-                                <Th>Emergency Withdrawal Address</Th>
-                                <Th>Actions</Th>
-                              </Tr>
-                          }
-                          
-                        </Thead>
-                        <Tbody>
-                          {insuranceList.map(insurance => {
-                            console.log(insurance.contractAddress, policyTokenInfo[insurance.contractAddress])
-                            const decimals = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].decimals : defaultDecimals;
-                            const symbol = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].symbol : defaultSymbol;
-                            const balance = policyTokenInfo[insurance.contractAddress] ? policyTokenInfo[insurance.contractAddress].balance : 0;
-                            const balanceShouldbePaid = insurance.monthlyWithdrawal.multipliedBy(parseInt((new Date().getTime() / 1000 - insurance.initialTime) / (30 * oneDaySeconds) + ''));
-                            let paidBalance = balanceShouldbePaid;
-                            let toBePaidBalance = new BigNumber(0);
-                            let withdrawableBalance = new BigNumber(0);
-                            let startWithdrawTime = insurance.initialTime + insurance.daysUntilWithdrawal * oneDaySeconds;
-                            
-                            const curTime = Math.floor(new Date().getTime() / 1000);
-                            let curAvailableFunds = curTime > startWithdrawTime ? (Math.floor((curTime - startWithdrawTime) / oneDaySeconds) - Math.floor((insurance.lastWithdrawalTime - startWithdrawTime) / oneDaySeconds)) * insurance.monthlyWithdrawal : 0;
-                            if (new BigNumber(balance).lt(curAvailableFunds)) {
-                              curAvailableFunds = balance;
-                            }
-                            if (new BigNumber(balance).lt(balanceShouldbePaid)) {
-                              paidBalance = new BigNumber(balance);
-                              toBePaidBalance = new BigNumber(balanceShouldbePaid).minus(balance);
-                            } else {
-                              withdrawableBalance = new BigNumber(balance).minus(balanceShouldbePaid);
-                            }
-                            return <Tr key={insurance.contract}>
-                              <Td>{new Date(insurance.initialTime * 1000).toLocaleString()}</Td>
-                              <Td><CopyableAddress address={insurance.contractAddress} /></Td>
-                              <Td><CopyableAddress address={insurance.policyHolder} /></Td>
-                              <Td><CopyableAddress address={insurance.beneficiary} /></Td>
-                              <Td><CopyableAddress address={insurance.depositedToken} /></Td>
-                              <Td>{formatAmount(new BigNumber(insurance.monthlyContribution).shiftedBy(-1 * decimals))} {symbol}</Td>
-                              <Td>{formatAmount(paidBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
-                              <Td>{formatAmount(toBePaidBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
-                              <Td>{formatAmount(withdrawableBalance.shiftedBy(-1 * decimals))} {symbol}</Td>
-                              <Td>{new Date((startWithdrawTime) * 1000).toLocaleString()}</Td>
-                              <Td>{formatAmount(new BigNumber(insurance.monthlyWithdrawal).shiftedBy(-1 * decimals))} {symbol}</Td>
-                              <Td>{formatAmount(new BigNumber(curAvailableFunds).shiftedBy(-1 * decimals))} {symbol}</Td>
-                              <Td><CopyableAddress address={insurance.emergencyAddress} /></Td>
-                              {
-                                insurance.isContractActive ? 
-                                  <Td>
-                                    <ButtonGroup size="sm" variant="outline">                        
-                                      {
-                                        walletAddress.toUpperCase() === insurance.beneficiary.toUpperCase() 
-                                        && <Button colorScheme="green" onClick={() => handleClaimFunds(insurance.contractAddress)} isLoading={claimingFunds} loadingText={_t("领取中", "Claiming")}>{_t("领取社保", "Claim Insurance")}</Button>
-                                      }
-                                      {
-                                        walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() 
-                                        && <Button colorScheme="blue" onClick={() => handleDeposit(insurance.contractAddress, insurance.depositedToken, symbol, decimals)}>{_t("充值", "Deposit")}</Button>
-                                      }
-                                      {
-                                        walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() 
-                                        && <Button colorScheme="yellow" onClick={() => handleWithdrawBalance(insurance.contractAddress)} isLoading={withdrawing} loadingText={_t("提取中", "Withdrawing")}>{_t("提取余额", "Withdraw Balance")}</Button>
-                                      }
-                                      {
-                                        (walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() || walletAddress.toUpperCase() === insurance.emergencyAddress.toUpperCase()) 
-                                        && <Button colorScheme="red" onClick={() => handleCloseAccount(insurance.contractAddress)} isLoading={emergencyWithdrawing} loadingText={_t("销户&提现中", "Closing & Withdrawing")}>{_t("销户&提现", "Close Account & Withdraw")}</Button>
-                                      }
-                                    </ButtonGroup>
-                                </Td>
-                                :
-                                <Td>{_t("已销户", "Account Closed")}</Td>
-                              }
-                              
-                            </Tr>
-                          })}
-                        </Tbody>
-                      </Table>
-                    </TableContainer>
+                  ) : userContracts.length > 0 ? (
+                    <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} spacing={8}>
+                      {insuranceList.map((insurance, index) => {
+                        const decimals = policyTokenInfo[insurance.contractAddress]?.decimals || defaultDecimals;
+                        const symbol = policyTokenInfo[insurance.contractAddress]?.symbol || defaultSymbol;
+                        const balance = policyTokenInfo[insurance.contractAddress]?.balance || 0;
+                        const balanceShouldbePaid = insurance.monthlyWithdrawal.multipliedBy(parseInt((new Date().getTime() / 1000 - insurance.initialTime) / (30 * oneDaySeconds) + ''));
+                        let paidBalance = balanceShouldbePaid;
+                        let toBePaidBalance = new BigNumber(0);
+                        let withdrawableBalance = new BigNumber(0);
+                        let startWithdrawTime = insurance.initialTime + insurance.daysUntilWithdrawal * oneDaySeconds;
+                        
+                        const curTime = Math.floor(new Date().getTime() / 1000);
+                        let curAvailableFunds = curTime > startWithdrawTime ? (Math.floor((curTime - startWithdrawTime) / oneDaySeconds) - Math.floor((insurance.lastWithdrawalTime - startWithdrawTime) / oneDaySeconds)) * insurance.monthlyWithdrawal : 0;
+                        if (new BigNumber(balance).lt(curAvailableFunds)) {
+                          curAvailableFunds = balance;
+                        }
+                        if (new BigNumber(balance).lt(balanceShouldbePaid)) {
+                          paidBalance = new BigNumber(balance);
+                          toBePaidBalance = new BigNumber(balanceShouldbePaid).minus(balance);
+                        } else {
+                          withdrawableBalance = new BigNumber(balance).minus(balanceShouldbePaid);
+                        }
+
+                        const bgColor = useColorModeValue('white', 'gray.800')
+                        const borderColor = useColorModeValue('gray.200', 'gray.600')
+                        const headingColor = useColorModeValue('blue.600', 'blue.300')
+
+                        return (
+                          <Card 
+                            key={index}
+                            bg={bgColor}
+                            borderColor={borderColor}
+                            borderWidth="1px"
+                            borderRadius="lg"
+                            overflow="hidden"
+                            boxShadow="lg"
+                            transition="all 0.3s"
+                            _hover={{ transform: 'translateY(-5px)', boxShadow: 'xl' }}
+                          >
+                            <CardHeader bg={useColorModeValue('blue.50', 'blue.900')} py={4}>
+                              <HStack justify="space-between" width="100%">
+                                <Heading size="md" color={headingColor}>{_t("保单", "Policy")} #{index + 1}</Heading>
+                                <Badge colorScheme={insurance.isContractActive ? "green" : "red"} fontSize="0.8em" py={1} px={2}>
+                                  {insurance.isContractActive ? _t("活跃", "Active") : _t("已关闭", "Closed")}
+                                </Badge>
+                              </HStack>
+                            </CardHeader>
+                            <CardBody>
+                              <VStack align="start" spacing={4}>
+                                <SimpleGrid columns={2} spacing={4} width="100%">
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("合约地址", "Contract Address")}</StatLabel>
+                                    <StatNumber fontSize="md"><CopyableAddress address={insurance.contractAddress} /></StatNumber>
+                                  </Stat>
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("投保时间", "Insurance Time")}</StatLabel>
+                                    <StatNumber fontSize="md">{new Date(insurance.initialTime * 1000).toLocaleDateString()}</StatNumber>
+                                  </Stat>
+                                </SimpleGrid>
+                                <Divider />
+                                <SimpleGrid columns={2} spacing={4} width="100%">
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("投保Token", "Insured Token")}</StatLabel>
+                                    <StatNumber fontSize="md">{symbol}</StatNumber>
+                                    <StatHelpText>
+                                      <CopyableAddress address={insurance.depositedToken} />
+                                    </StatHelpText>
+                                  </Stat>
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("每月缴纳", "Monthly Contribution")}</StatLabel>
+                                    <StatNumber fontSize="md">{formatAmount(new BigNumber(insurance.monthlyContribution).shiftedBy(-1 * decimals))} {symbol}</StatNumber>
+                                  </Stat>
+                                </SimpleGrid>
+                                <SimpleGrid columns={2} spacing={4} width="100%">
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("已缴纳", "Paid")}</StatLabel>
+                                    <StatNumber fontSize="md">{formatAmount(paidBalance.shiftedBy(-1 * decimals))} {symbol}</StatNumber>
+                                  </Stat>
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("待补充", "To Be Paid")}</StatLabel>
+                                    <StatNumber fontSize="md">{formatAmount(toBePaidBalance.shiftedBy(-1 * decimals))} {symbol}</StatNumber>
+                                  </Stat>
+                                </SimpleGrid>
+                                <SimpleGrid columns={2} spacing={4} width="100%">
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("每月领取", "Monthly Withdrawal")}</StatLabel>
+                                    <StatNumber fontSize="md">{formatAmount(new BigNumber(insurance.monthlyWithdrawal).shiftedBy(-1 * decimals))} {symbol}</StatNumber>
+                                  </Stat>
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("当前可领取", "Currently Available")}</StatLabel>
+                                    <StatNumber fontSize="md">{formatAmount(new BigNumber(curAvailableFunds).shiftedBy(-1 * decimals))} {symbol}</StatNumber>
+                                  </Stat>
+                                </SimpleGrid>
+                                <SimpleGrid columns={2} spacing={4} width="100%">
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("保单余额", "Policy Balance")}</StatLabel>
+                                    <StatNumber fontSize="md">{formatAmount(withdrawableBalance.shiftedBy(-1 * decimals))} {symbol}</StatNumber>
+                                  </Stat>
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("开始领取日", "Start Withdrawal Date")}</StatLabel>
+                                    <StatNumber fontSize="md">{new Date(startWithdrawTime * 1000).toLocaleDateString()}</StatNumber>
+                                  </Stat>
+                                </SimpleGrid>
+                                <Divider />
+                                <SimpleGrid columns={2} spacing={4} width="100%">
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("投保人", "Policy Holder")}</StatLabel>
+                                    <StatNumber fontSize="md"><CopyableAddress address={insurance.policyHolder} /></StatNumber>
+                                  </Stat>
+                                  <Stat>
+                                    <StatLabel fontSize="sm" fontWeight="medium">{_t("受益人", "Beneficiary")}</StatLabel>
+                                    <StatNumber fontSize="md"><CopyableAddress address={insurance.beneficiary} /></StatNumber>
+                                  </Stat>
+                                </SimpleGrid>
+                                <Stat>
+                                  <StatLabel fontSize="sm" fontWeight="medium">{_t("紧急联系人", "Emergency Contact")}</StatLabel>
+                                  <StatNumber fontSize="md"><CopyableAddress address={insurance.emergencyAddress} /></StatNumber>
+                                </Stat>
+                              </VStack>
+                            </CardBody>
+                            <CardFooter bg={useColorModeValue('gray.50', 'gray.900')} borderTop="1px" borderColor={borderColor}>
+                              <VStack spacing={2} width="100%">
+                                {insurance.isContractActive && (
+                                  <>
+                                    {walletAddress.toUpperCase() === insurance.beneficiary.toUpperCase() && (
+                                      <Button colorScheme="green" onClick={() => handleClaimFunds(insurance.contractAddress)} isLoading={claimingFunds} loadingText={_t("领取中", "Claiming")} width="100%">
+                                        {_t("领取社保", "Claim Insurance")}
+                                      </Button>
+                                    )}
+                                    {walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() && (
+                                      <>
+                                        <Button colorScheme="blue" onClick={() => handleDeposit(insurance.contractAddress, insurance.depositedToken, symbol, decimals)} width="100%">
+                                          {_t("充值", "Deposit")}
+                                        </Button>
+                                        <Button colorScheme="yellow" onClick={() => handleWithdrawBalance(insurance.contractAddress)} isLoading={withdrawing} loadingText={_t("提取中", "Withdrawing")} width="100%">
+                                          {_t("提取余额", "Withdraw Balance")}
+                                        </Button>
+                                      </>
+                                    )}
+                                    {(walletAddress.toUpperCase() === insurance.policyHolder.toUpperCase() || walletAddress.toUpperCase() === insurance.emergencyAddress.toUpperCase()) && (
+                                      <Button colorScheme="red" onClick={() => handleCloseAccount(insurance.contractAddress)} isLoading={emergencyWithdrawing} loadingText={_t("销户&提现中", "Closing & Withdrawing")} width="100%">
+                                        {_t("销户&提现", "Close Account & Withdraw")}
+                                      </Button>
+                                    )}
+                                  </>
+                                )}
+                              </VStack>
+                            </CardFooter>
+                          </Card>
+                        );
+                      })}
+                    </SimpleGrid>
                   ) : (
                     <Text>{_t("您还没有社保记录。", "You don't have any social insurance records yet.")}</Text>
                   )
