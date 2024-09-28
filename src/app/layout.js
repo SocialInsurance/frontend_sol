@@ -1,18 +1,15 @@
-'use client'
+import { Providers } from './providers'
 
-import { ChakraProvider } from '@chakra-ui/react'
-import { Analytics } from "@vercel/analytics/react"
-import ChatBox from './ChatBox';
+export const metadata = {
+  title: '链上社保',
+  description: '创新社保解决方案',
+}
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="zh">
       <body>
-        <ChakraProvider>
-          {children}
-        </ChakraProvider>
-        <ChatBox />
-        <Analytics />
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

@@ -9,7 +9,8 @@ import {
   Table, Thead, Tbody, Tr, Th, Td, TableContainer,
   Flex, Spacer, useToast, Select, ButtonGroup, Spinner, Center, IconButton
 } from '@chakra-ui/react'
-import { InfoIcon } from '@chakra-ui/icons'
+import Link from 'next/link'
+import { InfoIcon, InfoOutlineIcon } from '@chakra-ui/icons'
 import { createPublicClient, http, createWalletClient, custom, parseAbi, formatEther, parseEther, zeroAddress, parseUnits, erc20Abi } from 'viem'
 import { flare, mainnet, sepolia, blast, base, arbitrum, optimism } from 'viem/chains'
 import ssFactoryJson from './contracts/ssFactory.json'
@@ -37,12 +38,12 @@ function formatAmount(amount) {
 }
 
 const defaultDecimals = 18;
-const defaultSymbol = 'unknown';
+const defaultSymbol = 'stSol';
 
 
 const networkConfigs = {
   soldevnet: {
-    chain: mainnet,
+    chain: 'Solana',
     chainId: 'Devnet',
     name: 'Solana开发者网',
     tokens: [
@@ -113,19 +114,17 @@ const networkConfigs = {
   }
 };
 
-// const erc20Abi = parseAbi([
-//   'function balanceOf(address) view returns (uint256)',
-//   'function decimals() view returns (uint8)',
-//   'function symbol() view returns (string)',
-// ]);
+const soldevnet = 'soldevnet'
 
 export default function Home() {
+  //const router = useRouter()
+
   const oneDaySeconds = 24 * 3600; // 示例数据
   const oneYeadDays = 360;
   const [isOpen, setIsOpen] = useState(false)
   const [isOpenDepositDialog, setIsOpenDepositDialog] = useState(false)
   const [isWalletConnected, setIsWalletConnected] = useState(false)
-  const [walletAddress, setWalletAddress] = useState('')
+  const [walletAddress, setWalletAddress] = useState('GijcCocu7xgrRKxCn81boMR88hZ2UyoLN5NZ4pXe6Y2J')
   const toast = useToast()
   const [formData, setFormData] = useState({
     initialDeposit: '',
@@ -137,10 +136,9 @@ export default function Home() {
   })
 
   // 模拟的社保列表数据
-  const [insuranceList, setInsuranceList] = useState([
-  ])
+  const [insuranceList, setInsuranceList] = useState([])
 
-  const [selectedNetwork, setSelectedNetwork] = useState('soldevnet')
+  const [selectedNetwork, setSelectedNetwork] = useState(soldevnet)
   const [selectedToken, setSelectedToken] = useState('')
   const [selectedTokenDecimals, setSelectedTokenDecimals] = useState(18)
   const [customTokenSymbol, setCustomTokenSymbol] = useState('')
@@ -164,7 +162,7 @@ export default function Home() {
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
   const { publicKey, connect, disconnect } = useWallet();
 
-  const [publicClient, setPublicClient] = useState(createPublicClient({
+  const [publicClient, setPublicClient] = useState(selectedNetwork == soldevnet ? null : createPublicClient({
     chain: networkConfigs[selectedNetwork].chain,
     transport: http()
   }))
@@ -181,6 +179,8 @@ export default function Home() {
   );
 
   useEffect(() => {
+    if (selectedNetwork == soldevnet) return;
+
     setPublicClient(createPublicClient({
       chain: networkConfigs[selectedNetwork].chain,
       transport: http()
@@ -197,53 +197,56 @@ export default function Home() {
 
   const fetchTokenInfo = async (tokenAddr) => {
     if (!walletAddress) return
-
-    if (!tokenAddr) {
-      const token = networkConfigs[selectedNetwork].tokens.find(t => t.value === selectedToken)
-      if (!token) {
-        return;
+    if (selectedNetwork == soldevnet) {
+      // todo
+    } else {
+      if (!tokenAddr) {
+        const token = networkConfigs[selectedNetwork].tokens.find(t => t.value === selectedToken)
+        if (!token) {
+          return;
+        }
+        setSelectedTokenDecimals(token.decimals)
+        tokenAddr = token.address
       }
-      setSelectedTokenDecimals(token.decimals)
-      tokenAddr = token.address
-    }
-
-    try {
-      const values = await Promise.all([
-        publicClient.readContract({
-          address: tokenAddr,
-          abi: erc20Abi,
-          functionName: 'balanceOf',
-          args: [walletAddress],
-        }),
-        publicClient.readContract({
-          address: tokenAddr,
-          abi: erc20Abi,
-          functionName: 'decimals',
-        }),
-        publicClient.readContract({
-          address: tokenAddr,
-          abi: erc20Abi,
-          functionName: 'symbol',
-        }),
-      ])
-      let balance = values[0]
-      let decimals = values[1] // default for ETH
-      let symbol = values[2]
-
-      const formattedBalance = formatEther(balance, 'wei')
-      setUserBalance(parseFloat(formattedBalance).toFixed(4))
-      setCustomTokenSymbol(symbol);   
-      setSelectedTokenDecimals(Number(decimals));   
-    } catch (error) {
-      console.error('Error fetching balance:', error)
-      toast({
-        title: "Error fetching token info",
-        description: error.message,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      })
-    }
+  
+      try {
+        const values = await Promise.all([
+          publicClient.readContract({
+            address: tokenAddr,
+            abi: erc20Abi,
+            functionName: 'balanceOf',
+            args: [walletAddress],
+          }),
+          publicClient.readContract({
+            address: tokenAddr,
+            abi: erc20Abi,
+            functionName: 'decimals',
+          }),
+          publicClient.readContract({
+            address: tokenAddr,
+            abi: erc20Abi,
+            functionName: 'symbol',
+          }),
+        ])
+        let balance = values[0]
+        let decimals = values[1] // default for ETH
+        let symbol = values[2]
+  
+        const formattedBalance = formatEther(balance, 'wei')
+        setUserBalance(parseFloat(formattedBalance).toFixed(4))
+        setCustomTokenSymbol(symbol);   
+        setSelectedTokenDecimals(Number(decimals));   
+      } catch (error) {
+        console.error('Error fetching balance:', error)
+        toast({
+          title: "Error fetching token info",
+          description: error.message,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        })
+      }
+    }   
   }
 
   const fetchUserContracts = async () => {
@@ -286,7 +289,11 @@ export default function Home() {
 
   useEffect(() => {
     if (isWalletConnected && walletAddress) {
-      fetchUserContracts()
+      if (selectedNetwork == soldevnet) {
+
+      } else {
+        fetchUserContracts()
+      }
     }
   }, [isWalletConnected, walletAddress, selectedNetwork])
 
@@ -307,11 +314,17 @@ export default function Home() {
 
 
   useEffect(() => {
-    getPolicyCount();
+    if (selectedNetwork == soldevnet) {
+
+    } else {
+      getPolicyCount();
+    }
   }, [])
 
   useEffect(() => {
-    getPolicyCount();
+    if (publicClient) {
+      getPolicyCount();
+    }
   }, [publicClient])
 
   useEffect(() => {
@@ -907,15 +920,25 @@ export default function Home() {
           <Box as="main" py={20}>
             <Flex px={6} py={4} position="fixed" top={0} left={0} right={0} bg="white" boxShadow="sm" zIndex={10}>
               <Select value={selectedNetwork} onChange={(e) => handleNetworkChange(e.target.value)} width="200px">
-                <option value="soldevnet">{_t("Solana开发者网络", "Solana Devnet")}</option>
                 <option value="mainnet">{_t("以太坊主网", "Ethereum Mainnet")}</option>
                 <option value="arbitrum">{_t("Arbitrum主网", "Arbitrum Mainnet")}</option>
                 {/* <option value="optimism">{_t("Optimism主网", "Optimism Mainnet")}</option> */}
                 <option value="base">{_t("Base主网", "Base Mainnet")}</option>
                 <option value="blast">{_t("Blast主网", "Blast Mainnet")}</option>
+                <option value={soldevnet}>{_t("Solana开发者网络", "Solana Devnet")}</option>
                 <option value="sepolia">{_t("Sepolia 测试网", "Sepolia Testnet")}</option>
               </Select>
               <Spacer />
+              <Link href="/introduce" passHref>
+                <IconButton
+                  as="a"
+                  icon={<InfoOutlineIcon />}
+                  aria-label="Go to Introduction"
+                  mr={2}
+                  variant="outline"
+                  colorScheme="blue"
+                />
+              </Link>
               <Button onClick={() => changeLanguage('en')} mr={2}>EN</Button>
               <Button onClick={() => changeLanguage('zh')} mr={2}>中文</Button>
               <IconButton
@@ -929,7 +952,7 @@ export default function Home() {
                 mr={2}
               />
               {
-                selectedNetwork == 'soldevnet' ?
+                selectedNetwork == soldevnet ?
                   <WalletMultiButton />
                   :
                   isWalletConnected ? (
@@ -955,6 +978,18 @@ export default function Home() {
               <Heading as="h1" size="4xl" fontWeight="bold" color="blue.600">
                 {_t("链上社保", "Social Insurance")}
               </Heading>
+              <Text
+                fontSize={["md", "lg", "xl"]}
+                fontWeight="medium"
+                fontStyle="italic"
+                color="blue.500"
+                letterSpacing="wide"
+                textAlign="center"
+                mt={-2}
+                px={4}
+              >
+                {_t("迈向网络国家的第一步", "The first step towards a network state")}
+              </Text>
               <HStack spacing={6} flexWrap="wrap" justifyContent="center">
                 <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="blue">{_t("去中心化社保系统", "Decentralized")}</Badge>
                 <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="green">{_t("合约无Owner", "Without Owner")}</Badge>
@@ -998,7 +1033,7 @@ export default function Home() {
                     <Center>
                       <Spinner size="xl" />
                     </Center>
-                  ) : userContracts.length > 0 ? (
+                  ) : userContracts.length >= 0 ? (
                     <TableContainer>
                       <Table variant="simple">
                         <Thead>
@@ -1289,8 +1324,16 @@ export default function Home() {
                     }
                     
                     <HStack justifyContent="center">
-                      <Button colorScheme="blue" mr={3} onClick={handleSubmit} size="lg" isLoading={creating} loadingText={_t("创建中", "Creating")}>
-                      {_t("创建保单", "Create Policy")}
+                      <Button 
+                        isDisabled={selectedNetwork == soldevnet || !isWalletConnected} 
+                        colorScheme="blue" 
+                        mr={3} 
+                        onClick={handleSubmit} 
+                        size="lg" 
+                        isLoading={creating} 
+                        loadingText={_t("创建中", "Creating")}
+                      >
+                        {_t("创建保单", "Create Policy")}
                       </Button>
                       <Button variant="outline" onClick={() => setIsOpen(false)} size="lg">{_t("取消", "Cancel")}</Button>
                     </HStack>
