@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Box, Container, Heading, Text, VStack, Card, CardHeader, CardBody, Center, SimpleGrid } from '@chakra-ui/react'
+import { Box, Container, Heading, Text, VStack, Card, CardHeader, CardBody, Center, SimpleGrid, Button } from '@chakra-ui/react'
+import { ChevronLeftIcon } from '@chakra-ui/icons'
 
 const projectInfo = [
   { 
@@ -72,42 +73,45 @@ const projectInfo = [
 
 export default function Home() {
   return (
-    <Box as="main" bg="gray.50" minHeight="100vh" py={10}>
+    <Box as="main" bg="gray.50" minHeight="100vh" py={10} position="relative">
+      <Link href="/" passHref>
+        <Button
+          as="a"
+          leftIcon={<ChevronLeftIcon />}
+          position="absolute"
+          top="4"
+          left="4"
+          colorScheme="blue"
+          variant="outline"
+        >
+          返回主页
+        </Button>
+      </Link>
       <Container maxW="container.xl">
         <VStack spacing={10} align="center">
           <Center>
-            <Link href="/" passHref>
             <VStack spacing={2}>
                 <Text 
-                  as="a"
-                  fontSize="6xl" 
-                  fontWeight="bold" 
-                  textAlign="center"
-                  bgGradient="linear(to-r, blue.400, blue.500, purple.500)"
-                  bgClip="text"
-                  letterSpacing="tight"
-                  _hover={{
-                    textDecoration: 'underline',
-                    cursor: 'pointer'
-                  }}
+                as="a"
+                fontSize="6xl" 
+                fontWeight="bold" 
+                textAlign="center"
+                bgGradient="linear(to-r, blue.400, blue.500, purple.500)"
+                bgClip="text"
+                letterSpacing="tight"
                 >
-                  《链上社保》产品介绍
+                《链上社保》产品介绍
                 </Text>
                 <Text
-                  as="a"
-                  fontSize="3xl"
-                  fontWeight="semibold"
-                  textAlign="center"
-                  color="gray.600"
-                  _hover={{
-                    textDecoration: 'underline',
-                    cursor: 'pointer'
-                  }}
+                as="a"
+                fontSize="3xl"
+                fontWeight="semibold"
+                textAlign="center"
+                color="gray.600"
                 >
-                  Introduction to On-Chain Social Insurance
+                Introduction to On-Chain Social Insurance
                 </Text>
-              </VStack>
-            </Link>
+            </VStack>
           </Center>
           
           <SimpleGrid columns={2} spacing={6} width="100%" maxWidth="1200px">
