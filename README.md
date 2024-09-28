@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 链上社保 (On-Chain Social Insurance)
 
-## Getting Started
+## 项目简介
 
-First, run the development server:
+"链上社保"是一个创新的区块链项目，旨在探索和实现基于区块链技术的社会保障系统。本项目深入探讨了区块链技术、网络国家（Network State）的概念，以及如何将社会保障体系与区块链技术结合。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 主要内容
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+本项目涵盖以下核心主题：
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+1. 区块链的 Mass Adoption
+2. 区块链的本质
+3. 现代国家的本质
+4. 区块链 vs 国家
+5. Network State 概念
+6. 社会保障体系
+7. 项目 Roadmap
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 技术栈
 
-## Learn More
+- Next.js
+- React
+- Chakra UI
 
-To learn more about Next.js, take a look at the following resources:
+## 如何运行
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. 克隆仓库
+   ```
+   git clone https://github.com/SocialInsurance/frontend_sol.git
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. 安装依赖
+   ```
+   npm install
+   ```
 
-## Deploy on Vercel
+3. 运行开发服务器
+   ```
+   npm run dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. 在浏览器中打开 `http://localhost:3000` 查看项目
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 项目结构
+
+主要的应用逻辑位于 `src/app/page.js` 文件中。文件`src/app/introduce/page.js`包含了整个产品的设计理念和初衷。
+
+## 贡献
+
+欢迎对本项目提出建议或贡献代码。请先 fork 本仓库，创建您的特性分支，提交变更，然后发起 pull request。
+
+## 许可证
+
+MIT
