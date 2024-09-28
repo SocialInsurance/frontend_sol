@@ -138,7 +138,7 @@ export default function Home() {
   // 模拟的社保列表数据
   const [insuranceList, setInsuranceList] = useState([])
 
-  const [selectedNetwork, setSelectedNetwork] = useState(soldevnet)
+  const [selectedNetwork, setSelectedNetwork] = useState('mainnet')
   const [selectedToken, setSelectedToken] = useState('')
   const [selectedTokenDecimals, setSelectedTokenDecimals] = useState(18)
   const [customTokenSymbol, setCustomTokenSymbol] = useState('')
