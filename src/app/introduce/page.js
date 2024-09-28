@@ -7,8 +7,8 @@ const projectInfo = [
   { 
     title: "Mass Adoption", 
     titleEn: "Mass Adoption",
-    content: ["区块链的Mass Adoption会是什么❓", "👉 DeFi: 场景OK，但门槛高、用户少", "👉 游戏❓社交❓Web2的思路适合Web3吗❓", "👉 ❓"],
-    contentEn: ["What will be the Mass Adoption of blockchain?", "👉 DeFi: Scenario OK, but high threshold, few users", "👉 Games? Social? Is Web2 thinking suitable for Web3?", "👉 ?"]
+    content: ["区块链的Mass Adoption会是什么❓", "👉 DeFi: 场景OK，但门槛高、用户少", "👉 游戏❓社交❓Web2的思路适合Web3吗❓", "👉 next❓"],
+    contentEn: ["What will be the Mass Adoption of blockchain?", "👉 DeFi: Scenario OK, but high threshold, few users", "👉 Games? Social? Is Web2 thinking suitable for Web3?", "👉 next ?"]
   },
   { 
     title: "区块链的本质", 
