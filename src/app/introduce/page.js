@@ -100,7 +100,7 @@ export default function Home() {
                 bgClip="text"
                 letterSpacing="tight"
                 >
-                《链上社保》产品介绍
+                《链上社保》产品背后的思考
                 </Text>
                 <Text
                 as="a"
@@ -109,7 +109,7 @@ export default function Home() {
                 textAlign="center"
                 color="gray.600"
                 >
-                Introduction to On-Chain Social Insurance
+                Thoughts behind the On-Chain Social Insurance
                 </Text>
             </VStack>
           </Center>

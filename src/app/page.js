@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Image from 'next/image';
 import {
-  Box, Heading, VStack, HStack, Badge, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText, Image,
+  Box, Heading, VStack, HStack, Badge, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText,
   Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   FormControl, FormLabel, Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
   InputGroup, InputLeftAddon, InputRightAddon, Tooltip, Icon, Text,
@@ -18,6 +19,7 @@ import ssFactoryJson from './contracts/ssFactory.json'
 import ss from './contracts/ss.json'
 import BigNumber from 'bignumber.js';
 import { FaTwitter } from 'react-icons/fa';
+import { GiThink } from "react-icons/gi";
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base'
 import { ConnectionProvider, WalletProvider, useWallet } from '@solana/wallet-adapter-react'
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui'
@@ -943,14 +945,18 @@ export default function Home() {
               </Select>
               <Spacer />
               <Link href="/introduce" passHref>
-                <IconButton
-                  as="a"
-                  icon={<InfoOutlineIcon />}
-                  aria-label="Go to Introduction"
-                  mr={2}
-                  variant="outline"
-                  colorScheme="blue"
-                />
+                <Tooltip label={_t("了解我们为什么要做这个项目", "Learn why we're doing this project")}>
+                  <IconButton
+                    as="a"
+                    icon={
+                      <GiThink />
+                    }
+                    aria-label="Go to Introduction"
+                    mr={2}
+                    variant="outline"
+                    colorScheme="blue"
+                  />
+                </Tooltip>
               </Link>
               <Button onClick={() => changeLanguage('en')} mr={2}>EN</Button>
               <Button onClick={() => changeLanguage('zh')} mr={2}>中文</Button>
