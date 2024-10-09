@@ -52,7 +52,7 @@ const ChatBox = () => {
         setPrivateKey(sk);
         let pk = getPublicKey(sk)
         setPubKey(pk)
-        const threeDaysAgo = Math.floor(Date.now() / 1000) - 3 * 24 * 60 * 60;
+        const threeDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
         relay.subscribe([
             {
                 kinds: [1],

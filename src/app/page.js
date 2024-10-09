@@ -43,6 +43,18 @@ function formatAmount(amount) {
 const defaultDecimals = 18;
 const defaultSymbol = 'stSol';
 
+const demoInsurance4Sol = {
+  contractAddress:"4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+  lastWithdrawalTime:2037921563,
+  monthlyContribution:new BigNumber("1000000000000000000"),
+  daysUntilWithdrawal:3600,
+  monthlyWithdrawal:new BigNumber("1000000000000000000"),
+  emergencyAddress:"GijcCocu7xgrRKxCn81boMR88hZ2UyoLN5NZ4pXe6Y2J",
+  beneficiary:"GijcCocu7xgrRKxCn81boMR88hZ2UyoLN5NZ4pXe6Y2J",
+  initialTime:1726881563,
+  isContractActive:true,
+  depositedToken:"mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+  policyHolder:"GijcCocu7xgrRKxCn81boMR88hZ2UyoLN5NZ4pXe6Y2J"}
 
 const networkConfigs = {
   soldevnet: {
@@ -402,7 +414,7 @@ export default function Home() {
           policyHolder: oneData[9],
         })    
       }
-      console.log('parsedResults', parsedResults)
+      console.log('parsedResults', JSON.stringify(parsedResults))
       setInsuranceList(parsedResults)
     })
   }, [userContracts])
@@ -1052,9 +1064,9 @@ export default function Home() {
                     <Center>
                       <Spinner size="xl" />
                     </Center>
-                  ) : userContracts.length > 0 ? (
+                  ) : userContracts.length >= 0 ? (
                     <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} spacing={8}>
-                      {insuranceList.map((insurance, index) => {
+                      {[demoInsurance4Sol, ...insuranceList].map((insurance, index) => {
                         const decimals = policyTokenInfo[insurance.contractAddress]?.decimals || defaultDecimals;
                         const symbol = policyTokenInfo[insurance.contractAddress]?.symbol || defaultSymbol;
                         const balance = policyTokenInfo[insurance.contractAddress]?.balance || 0;
