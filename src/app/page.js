@@ -138,6 +138,9 @@ export default function Home() {
   const oneDaySeconds = 24 * 3600; // 示例数据
   const oneYeadDays = 360;
   const [isOpen, setIsOpen] = useState(false)
+  const [isOpenMyself, setIsOpenMyself] = useState(false)
+  const [isOpenFamily, setIsOpenFamily] = useState(false)
+  const [isOpenEmployee, setIsOpenEmployee] = useState(false)
   const [isOpenDepositDialog, setIsOpenDepositDialog] = useState(false)
   const [isWalletConnected, setIsWalletConnected] = useState(false)
   const [walletAddress, setWalletAddress] = useState('GijcCocu7xgrRKxCn81boMR88hZ2UyoLN5NZ4pXe6Y2J')
@@ -202,6 +205,18 @@ export default function Home() {
       transport: http()
     }))
   }, [selectedNetwork])
+
+  useEffect(() => {
+    setIsOpen(isOpenMyself || isOpenFamily || isOpenEmployee);
+  }, [isOpenMyself, isOpenFamily, isOpenEmployee])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsOpenMyself(false);
+      setIsOpenFamily(false);
+      setIsOpenEmployee(false);
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (isWalletConnected && selectedToken !== 'custom') {
@@ -623,7 +638,7 @@ export default function Home() {
         args: [
           depositedTokenAddress,
           walletAddress,
-          formData.beneficiary,
+          isOpenMyself ? walletAddress : formData.beneficiary,
           parseUnits(formData.monthlyContribution, selectedTokenDecimals),
           BigInt(parseInt(formData.yearsUntilWithdrawal * oneYeadDays)),
           parseUnits(formData.monthlyWithdrawal, selectedTokenDecimals),
@@ -1019,7 +1034,7 @@ export default function Home() {
                 mt={-2}
                 px={4}
               >
-                {_t("迈向网络国家的第一步", "The first step towards a network state")}
+                {_t("迈向网络国家的重要一步", "A crucial step towards a network state")}
               </Text>
               <HStack spacing={6} flexWrap="wrap" justifyContent="center">
                 <Badge fontSize="lg" p={3} borderRadius="md" colorScheme="blue">{_t("去中心化社保系统", "Decentralized")}</Badge>
@@ -1066,7 +1081,7 @@ export default function Home() {
                     </Center>
                   ) : userContracts.length >= 0 ? (
                     <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} spacing={8}>
-                      {[demoInsurance4Sol, ...insuranceList].map((insurance, index) => {
+                      {insuranceList.map((insurance, index) => {
                         const decimals = policyTokenInfo[insurance.contractAddress]?.decimals || defaultDecimals;
                         const symbol = policyTokenInfo[insurance.contractAddress]?.symbol || defaultSymbol;
                         const balance = policyTokenInfo[insurance.contractAddress]?.balance || 0;
@@ -1223,9 +1238,17 @@ export default function Home() {
                 }         
               </Box>
 
-              <Button colorScheme="blue" size="lg" onClick={() => setIsOpen(true)}>
-              {_t("创建我的社保", "Create My Social Insurance")}
-              </Button>
+              <HStack spacing={4}>
+                <Button colorScheme="blue" size="lg" onClick={() => setIsOpenMyself(true)}>
+                  {_t("为自己创建保单", "Create Insurance Policy For Myself")}
+                </Button>
+                <Button colorScheme="green" size="lg" onClick={() => setIsOpenFamily(true)}>
+                  {_t("为家人创建保单", "Create Insurance Policy For Family")}
+                </Button>
+                <Button colorScheme="purple" size="lg" onClick={() => setIsOpenEmployee(true)}>
+                  {_t("为雇员创建保单", "Create Insurance Policy For Employees")}
+                </Button>
+              </HStack>
 
               <Modal isOpen={isOpenDepositDialog} onClose={() => setIsOpenDepositDialog(false)}>
                 <ModalOverlay />
@@ -1257,7 +1280,7 @@ export default function Home() {
               <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} size="xl">
                 <ModalOverlay backdropFilter="blur(10px)" />
                 <ModalContent borderRadius="xl" boxShadow="xl">
-                  <ModalHeader bg="blue.500" color="white" borderTopRadius="xl">{_t("创建我的社保", "Create My Social Insurance")}</ModalHeader>
+                  <ModalHeader bg="blue.500" color="white" borderTopRadius="xl">{_t("创建保单", "Create Insurance Policy")}</ModalHeader>
                   <ModalCloseButton color="white" />
                   <ModalBody py={6}>
                     <VStack spacing={6}>
@@ -1329,15 +1352,32 @@ export default function Home() {
                           </NumberInput>
                         </InputGroup>
                       </FormControl>
-                      <FormControl>
-                        <FormLabel fontWeight="bold">
-                        {_t("受益人地址", "Beneficiary Address")}
-                          <Tooltip label={_t("在达到领取年限后，仅受益人可提取社保", "Only the beneficiary can withdraw insurance after reaching the withdrawal period")} placement="top">
-                            <Icon as={InfoIcon} ml={1} color="blue.500" />
-                          </Tooltip>
-                        </FormLabel>
-                        <Input name="beneficiary" value={formData.beneficiary} onChange={handleInputChange} placeholder="0x..." />
-                      </FormControl>
+                      {
+                        isOpenFamily ? 
+                          <FormControl>
+                            <FormLabel fontWeight="bold">
+                            {_t("家人地址", "Family Address")}
+                              <Tooltip label={_t("在达到领取年限后，仅受益人可提取社保", "Only the beneficiary can withdraw insurance after reaching the withdrawal period")} placement="top">
+                                <Icon as={InfoIcon} ml={1} color="blue.500" />
+                              </Tooltip>
+                            </FormLabel>
+                            <Input name="beneficiary" value={formData.beneficiary} onChange={handleInputChange} placeholder="0x..." />
+                          </FormControl>
+                          :
+                          isOpenEmployee ?
+                            <FormControl>
+                              <FormLabel fontWeight="bold">
+                              {_t("雇员地址", "Employee Address")}
+                                <Tooltip label={_t("在达到领取年限后，仅受益人可提取社保", "Only the beneficiary can withdraw insurance after reaching the withdrawal period")} placement="top">
+                                  <Icon as={InfoIcon} ml={1} color="blue.500" />
+                                </Tooltip>
+                              </FormLabel>
+                              <Input name="beneficiary" value={formData.beneficiary} onChange={handleInputChange} placeholder="0x..." />
+                            </FormControl>
+                            :
+                            ""
+                      }
+
                       <FormControl>
                         <FormLabel fontWeight="bold">
                         {_t("紧急提取地址", "Emergency Withdrawal Address")}
